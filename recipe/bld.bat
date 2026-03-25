@@ -9,4 +9,4 @@ cargo-bundle-licenses ^
     --output %SRC_DIR%\THIRDPARTY.yml ^
     || goto :error
 REM install the package
-%PYTHON% -m pip install . -vv
+%PYTHON% -m pip install . -vv --no-deps --no-build-isolation
