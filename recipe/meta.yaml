@@ -45,7 +45,7 @@ requirements:
 {% set tests_to_skip = tests_to_skip + " or test_pairwise_cosine" %}
 {% set tests_to_skip = tests_to_skip + " or test_l2_distance" %}
 {% set tests_to_skip = tests_to_skip + " or test_l2_distance_f16_bf16_cpu" %}
-{% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %}
+#{# {% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %} #}
 
 {% set test_files_to_skip = "--ignore python/tests/test_table_provider.py" %}
 {% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/test_migration.py" %}
@@ -79,7 +79,7 @@ test:
     - polars
     - ml_dtypes
     - psutil
-    - pytorch
+    - pytorch <2.9
     - pytest-timeout
 
 about:
