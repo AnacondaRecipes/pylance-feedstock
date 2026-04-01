@@ -34,11 +34,12 @@ requirements:
 {% set tests_to_skip = "test_all_permutations" %}
 
 # fail on py3.14: RuntimeError torch.compile not supported (see vector index + IVFPQ path).
+# Windows: torch.compile/Inductor can fault the process (exit -1073741819 / 0xC0000005) on IVFPQ + lance.torch.distance.
 # Skip until pytorch 2.10 is available with torch.compile support.
-{% set tests_to_skip = tests_to_skip + " or test_torch_index_with_nans" %}                 # [py==314]
-{% set tests_to_skip = tests_to_skip + " or test_index_with_no_centroid_movement" %}       # [py==314]
-{% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}                  # [py==314]
-{% set tests_to_skip = tests_to_skip + " or test_create_index_unsupported_accelerator" %}  # [py==314]
+{% set tests_to_skip = tests_to_skip + " or test_torch_index_with_nans" %}                 # [py==314 or win]
+{% set tests_to_skip = tests_to_skip + " or test_index_with_no_centroid_movement" %}       # [py==314 or win]
+{% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}                  # [py==314 or win]
+{% set tests_to_skip = tests_to_skip + " or test_create_index_unsupported_accelerator" %}  # [py==314 or win]
 
 # assumes /invalid/... cannot be created; fails as root in Docker.
 {% set tests_to_skip = tests_to_skip + " or test_lance_log_file_invalid_path" %}
