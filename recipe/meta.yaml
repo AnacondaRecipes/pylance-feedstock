@@ -31,32 +31,22 @@ requirements:
     - pyarrow >=14
     - lance-namespace >=0.5.2
 
-
-# test_ground_truth … test_l2_distance_f16_bf16_cpu — live in python/tests/torch_tests/test_distance.py; skipped on py<3.14; on 3.14 torch_tests is --ignore so these -k entries are redundant.
-
 {% set tests_to_skip = "test_all_permutations" %}
 
 # fail on py3.14: RuntimeError torch.compile not supported (see vector index + IVFPQ path).
-# Skip until pytorch 2.10 is available. 
+# Skip until pytorch 2.10 is available with torch.compile support.
 {% set tests_to_skip = tests_to_skip + " or test_torch_index_with_nans" %}                 # [py==314]
 {% set tests_to_skip = tests_to_skip + " or test_index_with_no_centroid_movement" %}       # [py==314]
 {% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}                  # [py==314]
 {% set tests_to_skip = tests_to_skip + " or test_create_index_unsupported_accelerator" %}  # [py==314]
 
-{% set tests_to_skip = tests_to_skip + " or test_ground_truth" %}
-{% set tests_to_skip = tests_to_skip + " or test_cosine_distance" %}
-{% set tests_to_skip = tests_to_skip + " or test_pairwise_cosine" %}
-{% set tests_to_skip = tests_to_skip + " or test_l2_distance" %}
-{% set tests_to_skip = tests_to_skip + " or test_l2_distance_f16_bf16_cpu" %}
-
 # assumes /invalid/... cannot be created; fails as root in Docker.
 {% set tests_to_skip = tests_to_skip + " or test_lance_log_file_invalid_path" %}
 
-# Whole-file/dir skips (--ignore): table_provider and migration need extra setup or are out of scope for this feedstock.
-# torch_tests ignored on py3.14: importing lance.torch.distance applies @torch.compile; PyTorch raises
-# RuntimeError: torch.compile is not supported on Python 3.14+ at import time (pytest collection fails). Skips torch marker tests on 3.14 for consistency.
+# E   ModuleNotFoundError: No module named 'datafusion'
 {% set test_files_to_skip = "--ignore python/tests/test_table_provider.py" %}
-{% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/test_migration.py" %}
+
+# Skip until pytorch 2.10 is available with torch.compile support.
 {% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/torch_tests" %}  # [py==314]
 
 # Markers: drop GPU/slow suites from default CI; on py3.14 also drop torch-marked tests to match torch_tests ignore.
