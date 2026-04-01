@@ -30,45 +30,52 @@ requirements:
     - numpy >=1.22
     - pyarrow >=14
     - lance-namespace >=0.5.2
+
+
+# test_ground_truth … test_l2_distance_f16_bf16_cpu — live in python/tests/torch_tests/test_distance.py; skipped on py<3.14; on 3.14 torch_tests is --ignore so these -k entries are redundant.
+
 {% set tests_to_skip = "test_all_permutations" %}
-{% set tests_to_skip = tests_to_skip + " or test_backward_compatibility_changed_index_protos" %}
-{% set tests_to_skip = tests_to_skip + " or test_fts_backward_v0_27_0" %}
 
-{% set tests_to_skip = tests_to_skip + " or test_torch_index_with_nans" %}
-{% set tests_to_skip = tests_to_skip + " or test_index_with_no_centroid_movement" %}
-{% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}
-
-{% set tests_to_skip = tests_to_skip + " or test_create_index_unsupported_accelerator" %} # [py==314]
+# fail on py3.14: RuntimeError torch.compile not supported (see vector index + IVFPQ path).
+{% set tests_to_skip = tests_to_skip + " or test_torch_index_with_nans" %}                 # [py==314]
+{% set tests_to_skip = tests_to_skip + " or test_index_with_no_centroid_movement" %}       # [py==314]
+{% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}                  # [py==314]
+{% set tests_to_skip = tests_to_skip + " or test_create_index_unsupported_accelerator" %}  # [py==314]
 
 {% set tests_to_skip = tests_to_skip + " or test_ground_truth" %}
 {% set tests_to_skip = tests_to_skip + " or test_cosine_distance" %}
 {% set tests_to_skip = tests_to_skip + " or test_pairwise_cosine" %}
 {% set tests_to_skip = tests_to_skip + " or test_l2_distance" %}
 {% set tests_to_skip = tests_to_skip + " or test_l2_distance_f16_bf16_cpu" %}
-{% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %}
 
+# assumes /invalid/... cannot be created; fails as root in Docker.
+{% set tests_to_skip = tests_to_skip + " or test_lance_log_file_invalid_path" %}
+
+# Whole-file/dir skips (--ignore): table_provider and migration need extra setup or are out of scope for this feedstock.
+# torch_tests ignored on py3.14: importing lance.torch.distance applies @torch.compile; PyTorch raises
+# RuntimeError: torch.compile is not supported on Python 3.14+ at import time (pytest collection fails). Skips torch marker tests on 3.14 for consistency.
 {% set test_files_to_skip = "--ignore python/tests/test_table_provider.py" %}
 {% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/test_migration.py" %}
-# pytorch not available for testing on python 3.14
 {% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/torch_tests" %}  # [py==314]
 
+# Markers: drop GPU/slow suites from default CI; on py3.14 also drop torch-marked tests to match torch_tests ignore.
 {% set markers_to_skip = "cuda or slow or gpu" %}
-# pytorch not available for testing on python 3.14
 {% set markers_to_skip = markers_to_skip + " or torch" %} # [py==314]
 
 test:
   source_files:
     - python/pyproject.toml
     - python/python/tests
+    - test_data
   imports:
     - lance
   commands:
     - pip check
     - cd python
-    
     - pytest -v -s -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests 
 
   requires:
+    - {{ compiler('cxx') }}  # torch.compile / inductor needs a working C++ compiler on PATH
     - pip
     - pytest
     - tqdm
