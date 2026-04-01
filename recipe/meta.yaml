@@ -37,6 +37,7 @@ requirements:
 {% set tests_to_skip = "test_all_permutations" %}
 
 # fail on py3.14: RuntimeError torch.compile not supported (see vector index + IVFPQ path).
+# Skip until pytorch 2.10 is available. 
 {% set tests_to_skip = tests_to_skip + " or test_torch_index_with_nans" %}                 # [py==314]
 {% set tests_to_skip = tests_to_skip + " or test_index_with_no_centroid_movement" %}       # [py==314]
 {% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}                  # [py==314]
