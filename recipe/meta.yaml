@@ -1,5 +1,5 @@
 {% set name = "pylance" %}
-{% set version = "2.0.1" %}
+{% set version = "4.0.0" %}
 
 package:
   name: {{ name|lower }}
@@ -7,14 +7,11 @@ package:
 
 source:
   url: https://github.com/lancedb/lance/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 07ef724dff55b1125291f0bfbd0e2f08e453f508fe6ca98d1ad9d34b11dc70ad
+  sha256: 72e1a28a84ed57e5d0e1bac4cb6855441e1c76099220472103145d1622394c61
 
 build:
   number: 0
-  skip: true  # [py<310]
-  # Debugging linux CI halt
-  skip: true # [osx or win]
-  skip: true # [not py==312]
+  skip: true  # [py<39]
 
 requirements:
   build:
@@ -26,13 +23,15 @@ requirements:
   host:
     - python
     - pip
-    - maturin <2
+    - maturin >=1.4
     - openssl
   run:
     - python
     - numpy >=1.22
     - pyarrow >=14
     - lance-namespace >=0.5.2
+  run_constrained:
+    - pytorch >=2.0
 
 {% set tests_to_skip = "test_all_permutations" %}
 
