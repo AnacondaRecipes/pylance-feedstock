@@ -12,6 +12,9 @@ source:
 build:
   number: 0
   skip: true  # [py<310]
+  # Debugging linux CI halt
+  skip: true # [osx or win]
+  skip: true # [not py==312]
 
 requirements:
   build:
@@ -64,7 +67,8 @@ test:
   commands:
     - pip check
     - cd python
-    - pytest -v -s -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests 
+    - export TQDM_DISABLE=1
+    - pytest -q -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests 
 
   requires:
     - {{ compiler('cxx') }}  # torch.compile / inductor needs a working C++ compiler on PATH
