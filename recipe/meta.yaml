@@ -12,6 +12,9 @@ source:
 build:
   number: 0
   skip: true  # [py<310]
+  # Debugging linux CI halt
+  skip: true # [osx or win]
+  skip: true # [not py==312]
 
 requirements:
   build:
@@ -47,6 +50,9 @@ requirements:
 {% set tests_to_skip = tests_to_skip + " or test_pairwise_cosine" %}    # [win]
 {% set tests_to_skip = tests_to_skip + " or test_l2_distance" %}        # [win]
 {% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %}  # [win]
+
+# Linux: test_table_roundtrip causes a zombie process causing PBP to hang.
+{% set tests_to_skip = tests_to_skip + " or test_table_roundtrip" %}  # [linux]
   
 # assumes /invalid/... cannot be created; fails as root in Docker.
 {% set tests_to_skip = tests_to_skip + " or test_lance_log_file_invalid_path" %}
@@ -71,9 +77,7 @@ test:
   commands:
     - pip check
     - cd python
-    # Skipping tests on linux CI due to hang. Tests run but the PBP task never completes.
-    # They can be ran locally. 
-    - pytest -q -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests  # [not linux]
+    - pytest -q -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests
 
   requires:
     - {{ compiler('cxx') }}  # torch.compile / inductor needs a working C++ compiler on PATH
