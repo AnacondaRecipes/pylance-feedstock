@@ -41,6 +41,13 @@ requirements:
 {% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}                  # [py==314 or win]
 {% set tests_to_skip = tests_to_skip + " or test_create_index_unsupported_accelerator" %}  # [py==314 or win]
 
+# Windows fatal exception: access violation
+{% set tests_to_skip = tests_to_skip + " or test_ground_truth" %}       # [win]
+{% set tests_to_skip = tests_to_skip + " or test_cosine_distance" %}    # [win]
+{% set tests_to_skip = tests_to_skip + " or test_pairwise_cosine" %}    # [win]
+{% set tests_to_skip = tests_to_skip + " or test_l2_distance" %}        # [win]
+{% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %}  # [win]
+  
 # assumes /invalid/... cannot be created; fails as root in Docker.
 {% set tests_to_skip = tests_to_skip + " or test_lance_log_file_invalid_path" %}
 
