@@ -57,6 +57,9 @@ requirements:
 # assumes /invalid/... cannot be created; fails as root in Docker.
 {% set tests_to_skip = tests_to_skip + " or test_lance_log_file_invalid_path" %}
 
+# Segmentation fault
+{% set tests_to_skip = tests_to_skip + " or test_l2_distance_f16_bf16_cpu" %}  # [linux]
+
 # E   ModuleNotFoundError: No module named 'datafusion'
 {% set test_files_to_skip = "--ignore python/tests/test_table_provider.py" %}
 
