@@ -1,5 +1,5 @@
 {% set name = "pylance" %}
-{% set version = "2.0.1" %}
+{% set version = "4.0.0" %}
 
 package:
   name: {{ name|lower }}
@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/lancedb/lance/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 07ef724dff55b1125291f0bfbd0e2f08e453f508fe6ca98d1ad9d34b11dc70ad
+  sha256: 72e1a28a84ed57e5d0e1bac4cb6855441e1c76099220472103145d1622394c61
 
 build:
   number: 0
@@ -15,9 +15,6 @@ build:
 
 requirements:
   build:
-    - python                                 # [build_platform != target_platform]
-    - cross-python_{{ target_platform }}     # [build_platform != target_platform]
-    - maturin <2                             # [build_platform != target_platform]
     - {{ compiler('c') }}
     - {{ stdlib("c") }}
     - {{ compiler('rust') }}
@@ -26,30 +23,94 @@ requirements:
   host:
     - python
     - pip
-    - maturin <2
+    - maturin >=1.4
     - openssl
   run:
     - python
     - numpy >=1.22
     - pyarrow >=14
-    - lance-namespace >=0.4.5
+    - lance-namespace >=0.5.2
+  run_constrained:
+    - pytorch >=2.0
+
+{% set tests_to_skip = "test_all_permutations" %}
+
+# fail on py3.14: RuntimeError torch.compile not supported (see vector index + IVFPQ path).
+# Windows: torch.compile/Inductor can fault the process (exit -1073741819 / 0xC0000005) on IVFPQ + lance.torch.distance.
+# Skip until pytorch 2.10 is available with torch.compile support.
+{% set tests_to_skip = tests_to_skip + " or test_torch_index_with_nans" %}                 # [py==314 or win]
+{% set tests_to_skip = tests_to_skip + " or test_index_with_no_centroid_movement" %}       # [py==314 or win]
+{% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}                  # [py==314 or win]
+{% set tests_to_skip = tests_to_skip + " or test_create_index_unsupported_accelerator" %}  # [py==314 or win]
+
+# Windows fatal exception: access violation
+{% set tests_to_skip = tests_to_skip + " or test_ground_truth" %}       # [win]
+{% set tests_to_skip = tests_to_skip + " or test_cosine_distance" %}    # [win]
+{% set tests_to_skip = tests_to_skip + " or test_pairwise_cosine" %}    # [win]
+{% set tests_to_skip = tests_to_skip + " or test_l2_distance" %}        # [win]
+{% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %}  # [win]
+
+# Linux: test_table_roundtrip causes a zombie process causing PBP to hang.
+{% set tests_to_skip = tests_to_skip + " or test_table_roundtrip" %}  # [linux]
+  
+# assumes /invalid/... cannot be created; fails as root in Docker.
+{% set tests_to_skip = tests_to_skip + " or test_lance_log_file_invalid_path" %}
+
+# Segmentation fault
+{% set tests_to_skip = tests_to_skip + " or test_l2_distance_f16_bf16_cpu" %}  # [linux]
+
+# E   ModuleNotFoundError: No module named 'datafusion'
+{% set test_files_to_skip = "--ignore python/tests/test_table_provider.py" %}
+
+# Skip until pytorch 2.10 is available with torch.compile support.
+{% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/torch_tests" %}  # [py==314]
+
+# Markers: drop GPU/slow suites from default CI; on py3.14 also drop torch-marked tests to match torch_tests ignore.
+{% set markers_to_skip = "cuda or slow or gpu" %}
+{% set markers_to_skip = markers_to_skip + " or torch" %} # [py==314]
 
 test:
+  source_files:
+    - python/pyproject.toml
+    - python/python/tests
+    - test_data
   imports:
     - lance
   commands:
     - pip check
+    - cd python
+    - pytest -q -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests
+
   requires:
+    - {{ compiler('cxx') }}  # torch.compile / inductor needs a working C++ compiler on PATH
     - pip
+    - pytest
+    - tqdm
+    - pandas
+    - pillow
+    - duckdb
+    - datasets
+    - polars
+    - ml_dtypes
+    - psutil
+    - pytorch
+    - pytest-timeout
 
 about:
-  home: https://github.com/lancedb/lance
+  home: https://lance.org/
   summary: python wrapper for Lance columnar format
+  description: |
+    Lance is an open lakehouse format for multimodal AI. It contains a file
+    format, table format, and catalog spec that allows you to build a complete
+    lakehouse on top of object storage to power your AI workflows.
   license: Apache-2.0
   license_file:
     - LICENSE
     - python/LICENSE
     - THIRDPARTY.yml
+  license_family: Apache
+  dev_url: https://github.com/lance-format/lance
+  doc_url: https://lance.org/
 
 extra:
   recipe-maintainers:
