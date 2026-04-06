@@ -24,7 +24,7 @@ requirements:
     - python
     - pip
     - maturin >=1.4
-    - openssl
+    - openssl {{ openssl }}
   run:
     - python
     - numpy >=1.22
@@ -82,7 +82,7 @@ test:
     - pytest -q -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests
 
   requires:
-    - {{ compiler('cxx') }}  # torch.compile / inductor needs a working C++ compiler on PATH
+    - cxx-compiler  # torch.compile / inductor needs a working C++ compiler on PATH
     - pip
     - pytest
     - tqdm
