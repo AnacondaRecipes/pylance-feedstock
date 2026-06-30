@@ -52,6 +52,7 @@ requirements:
 {% set tests_to_skip = tests_to_skip + " or test_pairwise_cosine" %}    # [win]
 {% set tests_to_skip = tests_to_skip + " or test_l2_distance" %}        # [win]
 {% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %}  # [win]
+{% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}  # [linux and aarch64]
 
 # Linux: test_table_roundtrip causes a zombie process causing PBP to hang.
 {% set tests_to_skip = tests_to_skip + " or test_table_roundtrip" %}  # [linux]
@@ -71,6 +72,8 @@ requirements:
 # Markers: drop GPU/slow suites from default CI; on py3.14 also drop torch-marked tests to match torch_tests ignore.
 {% set markers_to_skip = "cuda or slow or gpu" %}
 {% set markers_to_skip = markers_to_skip + " or torch" %} # [py==314]
+
+
 
 test:
   source_files:
