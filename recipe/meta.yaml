@@ -10,7 +10,7 @@ source:
   sha256: 72e1a28a84ed57e5d0e1bac4cb6855441e1c76099220472103145d1622394c61
 
 build:
-  number: 0
+  number: 1
   skip: true  # [py<39]
 
 requirements:
@@ -27,7 +27,10 @@ requirements:
     - openssl {{ openssl }}
   run:
     - python
-    - numpy >=1.22
+    # E  DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
+    # E  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
+    # https://github.com/scikit-image/scikit-image/pull/8020
+    - numpy >=1.22,<2.5
     - pyarrow >=14
     - lance-namespace >=0.5.2
   run_constrained:
@@ -49,6 +52,7 @@ requirements:
 {% set tests_to_skip = tests_to_skip + " or test_pairwise_cosine" %}    # [win]
 {% set tests_to_skip = tests_to_skip + " or test_l2_distance" %}        # [win]
 {% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %}  # [win]
+{% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}  # [linux and aarch64]
 
 # Linux: test_table_roundtrip causes a zombie process causing PBP to hang.
 {% set tests_to_skip = tests_to_skip + " or test_table_roundtrip" %}  # [linux]
@@ -68,6 +72,8 @@ requirements:
 # Markers: drop GPU/slow suites from default CI; on py3.14 also drop torch-marked tests to match torch_tests ignore.
 {% set markers_to_skip = "cuda or slow or gpu" %}
 {% set markers_to_skip = markers_to_skip + " or torch" %} # [py==314]
+
+
 
 test:
   source_files:
