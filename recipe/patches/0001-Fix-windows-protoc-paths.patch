@@ -1,12 +1,25 @@
-From 5f9ed84da299eafb8ca094896652e24ef0a8a189 Mon Sep 17 00:00:00 2001
+From d43f3250953cfe1a315373d7d9addf3fa0dfd050 Mon Sep 17 00:00:00 2001
 From: Andrii Vetroumov <avetroumov@anaconda.com>
-Date: Wed, 16 Sep 2026 16:39:05 +0300
+Date: Wed, 16 Sep 2026 17:09:40 +0300
 Subject: [PATCH] Fix windows protoc paths
 
 ---
- rust/lance-index/build.rs | 17 +++++++++++------
- 1 file changed, 11 insertions(+), 6 deletions(-)
+ rust/lance-index/Cargo.toml |  1 +
+ rust/lance-index/build.rs   | 17 +++++++++++------
+ 2 files changed, 12 insertions(+), 6 deletions(-)
 
+diff --git a/rust/lance-index/Cargo.toml b/rust/lance-index/Cargo.toml
+index 1fac7c1d1..a3cbc2d98 100644
+--- a/rust/lance-index/Cargo.toml
++++ b/rust/lance-index/Cargo.toml
+@@ -100,6 +100,7 @@ tokenizer-jieba = ["dep:jieba-rs", "lance-tokenizer/tokenizer-jieba"]
+ [build-dependencies]
+ prost-build.workspace = true
+ protobuf-src = { workspace = true, optional = true }
++dunce = "1.0"
+ 
+ [package.metadata.docs.rs]
+ # docs.rs uses an older version of Ubuntu that does not have the necessary protoc version
 diff --git a/rust/lance-index/build.rs b/rust/lance-index/build.rs
 index b47744f7b..e73d86767 100644
 --- a/rust/lance-index/build.rs
