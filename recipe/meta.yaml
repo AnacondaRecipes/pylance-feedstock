@@ -9,7 +9,7 @@ source:
   url: https://github.com/lancedb/lance/archive/refs/tags/v{{ version }}.tar.gz
   sha256: e2704758360cb3e38b038dd7cbcdea74970c208e5fbe57c1cc3ecbedb72f823c
   patches:
-    - patches/0001-Fix-windows-protoc-paths.patch
+    - patches/0001-Fix-windows-protoc-paths.patch  # [win]
 
 build:
   number: 0

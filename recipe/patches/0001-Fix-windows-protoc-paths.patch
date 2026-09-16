@@ -1,47 +1,49 @@
-From 5e9ff11b06d9ea9e11a8b0b12417f65d8ddf499c Mon Sep 17 00:00:00 2001
+From 16784c89ecb575b46df2e1eecd783bf82f42047a Mon Sep 17 00:00:00 2001
 From: Andrii Vetroumov <avetroumov@anaconda.com>
-Date: Wed, 16 Sep 2026 13:30:00 +0300
+Date: Wed, 16 Sep 2026 14:47:24 +0300
 Subject: [PATCH] Fix windows protoc paths
 
 ---
- rust/lance/build.rs | 9 +++++++--
- 1 file changed, 7 insertions(+), 2 deletions(-)
+ rust/lance-index/build.rs | 13 +++++++++----
+ 1 file changed, 9 insertions(+), 4 deletions(-)
 
-diff --git a/rust/lance/build.rs b/rust/lance/build.rs
-index 4225007d4..593c3d767 100644
---- a/rust/lance/build.rs
-+++ b/rust/lance/build.rs
-@@ -2,23 +2,28 @@
- // SPDX-FileCopyrightText: Copyright The Lance Authors
+diff --git a/rust/lance-index/build.rs b/rust/lance-index/build.rs
+index b47744f7b..cd28422be 100644
+--- a/rust/lance-index/build.rs
++++ b/rust/lance-index/build.rs
+@@ -3,6 +3,7 @@
  
+ use std::env;
  use std::io::Result;
 +use std::path::Path;
  
  fn main() -> Result<()> {
      println!("cargo:rerun-if-changed=protos");
- 
-     #[cfg(feature = "protoc")]
--    // Use vendored protobuf compiler if requested.
-     unsafe {
+@@ -16,16 +17,20 @@ fn main() -> Result<()> {
          std::env::set_var("PROTOC", protobuf_src::protoc());
      }
  
-+    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
-+        .expect("CARGO_MANIFEST_DIR not set");
++    let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
 +    let proto_dir = Path::new(&manifest_dir).join("protos");
-+    let ann_proto = proto_dir.join("ann.proto");
++    let proto_cache_dir = Path::new(&manifest_dir).join("protos-cache");
 +
      let mut prost_build = prost_build::Config::new();
-     prost_build.extern_path(".lance.table", "::lance_table::format::pb");
-     prost_build.extern_path(".lance.index.pb", "::lance_index::pb");
-     prost_build.extern_path(".lance.datafusion", "::lance_datafusion::pb");
      prost_build.protoc_arg("--experimental_allow_proto3_optional");
      prost_build.enable_type_names();
--    prost_build.compile_protos(&["./protos/ann.proto"], &["./protos"])?;
-+    prost_build.compile_protos(&[ann_proto], &[proto_dir])?;
+     prost_build.compile_protos(
+         &[
+-            "./protos/index.proto",
+-            "./protos/index_old.proto",
+-            "./protos-cache/cache.proto",
++            proto_dir.join("index.proto"),
++            proto_dir.join("index_old.proto"),
++            proto_cache_dir.join("cache.proto"),
+         ],
+-        &["./protos", "./protos-cache"],
++        &[proto_dir.as_path(), proto_cache_dir.as_path()],
+     )?;
  
-     Ok(())
- }
+     let rust_toolchain = env::var("RUSTUP_TOOLCHAIN")
 -- 
 2.54.0
 
