@@ -1,0 +1,47 @@
+From 5e9ff11b06d9ea9e11a8b0b12417f65d8ddf499c Mon Sep 17 00:00:00 2001
+From: Andrii Vetroumov <avetroumov@anaconda.com>
+Date: Wed, 16 Sep 2026 13:30:00 +0300
+Subject: [PATCH] Fix windows protoc paths
+
+---
+ rust/lance/build.rs | 9 +++++++--
+ 1 file changed, 7 insertions(+), 2 deletions(-)
+
+diff --git a/rust/lance/build.rs b/rust/lance/build.rs
+index 4225007d4..593c3d767 100644
+--- a/rust/lance/build.rs
++++ b/rust/lance/build.rs
+@@ -2,23 +2,28 @@
+ // SPDX-FileCopyrightText: Copyright The Lance Authors
+ 
+ use std::io::Result;
++use std::path::Path;
+ 
+ fn main() -> Result<()> {
+     println!("cargo:rerun-if-changed=protos");
+ 
+     #[cfg(feature = "protoc")]
+-    // Use vendored protobuf compiler if requested.
+     unsafe {
+         std::env::set_var("PROTOC", protobuf_src::protoc());
+     }
+ 
++    let manifest_dir = std::env::var("CARGO_MANIFEST_DIR")
++        .expect("CARGO_MANIFEST_DIR not set");
++    let proto_dir = Path::new(&manifest_dir).join("protos");
++    let ann_proto = proto_dir.join("ann.proto");
++
+     let mut prost_build = prost_build::Config::new();
+     prost_build.extern_path(".lance.table", "::lance_table::format::pb");
+     prost_build.extern_path(".lance.index.pb", "::lance_index::pb");
+     prost_build.extern_path(".lance.datafusion", "::lance_datafusion::pb");
+     prost_build.protoc_arg("--experimental_allow_proto3_optional");
+     prost_build.enable_type_names();
+-    prost_build.compile_protos(&["./protos/ann.proto"], &["./protos"])?;
++    prost_build.compile_protos(&[ann_proto], &[proto_dir])?;
+ 
+     Ok(())
+ }
+-- 
+2.54.0
+
