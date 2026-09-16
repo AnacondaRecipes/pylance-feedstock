@@ -1,8 +1,8 @@
 {% set name = "pylance" %}
-{% set version = "4.0.0" %}
+{% set version = "11.0.0" %}
 
 package:
-  name: {{ name|lower }}
+  name: {{ name }}
   version: {{ version }}
 
 source:
@@ -10,8 +10,8 @@ source:
   sha256: 72e1a28a84ed57e5d0e1bac4cb6855441e1c76099220472103145d1622394c61
 
 build:
-  number: 1
-  skip: true  # [py<39]
+  number: 0
+  skip: true  # [py<310]
 
 requirements:
   build:
@@ -24,7 +24,6 @@ requirements:
     - python
     - pip
     - maturin >=1.4
-    - openssl {{ openssl }}
   run:
     - python
     # E  DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
@@ -32,7 +31,7 @@ requirements:
     # https://github.com/scikit-image/scikit-image/pull/8020
     - numpy >=1.22,<2.5
     - pyarrow >=14
-    - lance-namespace >=0.5.2
+    - lance-namespace >=0.8.5,<0.9
   run_constrained:
     - pytorch >=2.0
 
@@ -79,14 +78,12 @@ test:
   source_files:
     - python/pyproject.toml
     - python/python/tests
-    - test_data
   imports:
     - lance
   commands:
     - pip check
     - cd python
-    - pytest -q -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests
-
+    - pytest -vv -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests
   requires:
     - cxx-compiler  # torch.compile / inductor needs a working C++ compiler on PATH
     - pip
