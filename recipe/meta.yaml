@@ -7,7 +7,7 @@ package:
 
 source:
   url: https://github.com/lancedb/lance/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 72e1a28a84ed57e5d0e1bac4cb6855441e1c76099220472103145d1622394c61
+  sha256: e2704758360cb3e38b038dd7cbcdea74970c208e5fbe57c1cc3ecbedb72f823c
 
 build:
   number: 0
