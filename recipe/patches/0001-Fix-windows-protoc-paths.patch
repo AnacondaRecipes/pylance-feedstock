@@ -1,67 +1,45 @@
-From 568dbbab078eec5f0df02c351d16cb29220140b4 Mon Sep 17 00:00:00 2001
+From 1265852bb71db27d3af97b870d826cff3088e23a Mon Sep 17 00:00:00 2001
 From: Andrii Vetroumov <avetroumov@anaconda.com>
-Date: Wed, 16 Sep 2026 17:54:41 +0300
+Date: Wed, 16 Sep 2026 18:24:21 +0300
 Subject: [PATCH] Fix windows protoc paths
 
 ---
- rust/lance-index/build.rs | 34 ++++++++++++++++++++++++++--------
- 1 file changed, 26 insertions(+), 8 deletions(-)
+ rust/lance-index/build.rs | 15 +++++++++++++++
+ 1 file changed, 15 insertions(+)
 
 diff --git a/rust/lance-index/build.rs b/rust/lance-index/build.rs
-index b47744f7b..fc4ae7d43 100644
+index b47744f7b..4cf8213e0 100644
 --- a/rust/lance-index/build.rs
 +++ b/rust/lance-index/build.rs
-@@ -3,6 +3,7 @@
- 
- use std::env;
- use std::io::Result;
-+use std::path::{Path, PathBuf};
- 
- fn main() -> Result<()> {
-     println!("cargo:rerun-if-changed=protos");
-@@ -16,17 +17,34 @@ fn main() -> Result<()> {
+@@ -16,6 +16,16 @@ fn main() -> Result<()> {
          std::env::set_var("PROTOC", protobuf_src::protoc());
      }
  
 +    let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
-+    let proto_dir: PathBuf = Path::new(&manifest_dir).join("protos");
-+    let proto_cache_dir: PathBuf = Path::new(&manifest_dir).join("protos-cache");
-+
-+    // Debug visibility: print exactly what we're about to hand to protoc,
-+    // and whether each path actually exists, before doing anything else.
-+    println!("cargo:warning=manifest_dir = {}", manifest_dir);
-+    println!("cargo:warning=proto_dir = {} (exists={})", proto_dir.display(), proto_dir.exists());
-+    println!("cargo:warning=proto_cache_dir = {} (exists={})", proto_cache_dir.display(), proto_cache_dir.exists());
-+
-+    let index_proto = proto_dir.join("index.proto");
-+    let index_old_proto = proto_dir.join("index_old.proto");
-+    let cache_proto = proto_cache_dir.join("cache.proto");
-+    for p in [&index_proto, &index_old_proto, &cache_proto] {
-+        println!("cargo:warning=proto file {} (exists={})", p.display(), p.exists());
-+    }
++    let orig_dir = env::current_dir()?;
++    // Run protoc with CWD = crate root, using short relative paths only.
++    // This sidesteps the Windows command-line quoting bug where absolute
++    // paths (with drive letters / trailing backslashes) get mangled when
++    // passed through prost-build -> protoc, causing spurious
++    // "File does not reside within any path specified using --proto_path"
++    // errors even when the paths are provably identical on the Rust side.
++    env::set_current_dir(&manifest_dir)?;
 +
      let mut prost_build = prost_build::Config::new();
      prost_build.protoc_arg("--experimental_allow_proto3_optional");
      prost_build.enable_type_names();
--    prost_build.compile_protos(
--        &[
--            "./protos/index.proto",
--            "./protos/index_old.proto",
--            "./protos-cache/cache.proto",
--        ],
--        &["./protos", "./protos-cache"],
--    )?;
-+    let result = prost_build.compile_protos(
-+        &[index_proto, index_old_proto, cache_proto],
-+        &[proto_dir.as_path(), proto_cache_dir.as_path()],
-+    );
-+    if let Err(ref e) = result {
-+        println!("cargo:warning=compile_protos failed: {e}");
-+    }
-+    result?;
+@@ -28,6 +38,11 @@ fn main() -> Result<()> {
+         &["./protos", "./protos-cache"],
+     )?;
  
++    // Always restore CWD before propagating any error, so a failure here
++    // doesn't leave later cargo/build-script logic running from the wrong dir.
++    env::set_current_dir(&orig_dir)?;
++    result?;
++    
      let rust_toolchain = env::var("RUSTUP_TOOLCHAIN")
          .or_else(|e| match e {
+             env::VarError::NotPresent => Ok("stable".into()),
 -- 
 2.54.0
 
