@@ -1,64 +1,67 @@
-From d43f3250953cfe1a315373d7d9addf3fa0dfd050 Mon Sep 17 00:00:00 2001
+From 568dbbab078eec5f0df02c351d16cb29220140b4 Mon Sep 17 00:00:00 2001
 From: Andrii Vetroumov <avetroumov@anaconda.com>
-Date: Wed, 16 Sep 2026 17:09:40 +0300
+Date: Wed, 16 Sep 2026 17:54:41 +0300
 Subject: [PATCH] Fix windows protoc paths
 
 ---
- rust/lance-index/Cargo.toml |  1 +
- rust/lance-index/build.rs   | 17 +++++++++++------
- 2 files changed, 12 insertions(+), 6 deletions(-)
+ rust/lance-index/build.rs | 34 ++++++++++++++++++++++++++--------
+ 1 file changed, 26 insertions(+), 8 deletions(-)
 
-diff --git a/rust/lance-index/Cargo.toml b/rust/lance-index/Cargo.toml
-index 1fac7c1d1..a3cbc2d98 100644
---- a/rust/lance-index/Cargo.toml
-+++ b/rust/lance-index/Cargo.toml
-@@ -100,6 +100,7 @@ tokenizer-jieba = ["dep:jieba-rs", "lance-tokenizer/tokenizer-jieba"]
- [build-dependencies]
- prost-build.workspace = true
- protobuf-src = { workspace = true, optional = true }
-+dunce = "1.0"
- 
- [package.metadata.docs.rs]
- # docs.rs uses an older version of Ubuntu that does not have the necessary protoc version
 diff --git a/rust/lance-index/build.rs b/rust/lance-index/build.rs
-index b47744f7b..e73d86767 100644
+index b47744f7b..fc4ae7d43 100644
 --- a/rust/lance-index/build.rs
 +++ b/rust/lance-index/build.rs
 @@ -3,6 +3,7 @@
  
  use std::env;
  use std::io::Result;
-+use std::path::Path;
++use std::path::{Path, PathBuf};
  
  fn main() -> Result<()> {
      println!("cargo:rerun-if-changed=protos");
-@@ -16,16 +17,20 @@ fn main() -> Result<()> {
+@@ -16,17 +17,34 @@ fn main() -> Result<()> {
          std::env::set_var("PROTOC", protobuf_src::protoc());
      }
  
 +    let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
-+    let proto_dir = dunce::canonicalize(Path::new(&manifest_dir).join("protos"))?;
-+    let proto_cache_dir = dunce::canonicalize(Path::new(&manifest_dir).join("protos-cache"))?;
++    let proto_dir: PathBuf = Path::new(&manifest_dir).join("protos");
++    let proto_cache_dir: PathBuf = Path::new(&manifest_dir).join("protos-cache");
 +
-+    let index_proto = dunce::canonicalize(proto_dir.join("index.proto"))?;
-+    let index_old_proto = dunce::canonicalize(proto_dir.join("index_old.proto"))?;
-+    let cache_proto = dunce::canonicalize(proto_cache_dir.join("cache.proto"))?;
++    // Debug visibility: print exactly what we're about to hand to protoc,
++    // and whether each path actually exists, before doing anything else.
++    println!("cargo:warning=manifest_dir = {}", manifest_dir);
++    println!("cargo:warning=proto_dir = {} (exists={})", proto_dir.display(), proto_dir.exists());
++    println!("cargo:warning=proto_cache_dir = {} (exists={})", proto_cache_dir.display(), proto_cache_dir.exists());
++
++    let index_proto = proto_dir.join("index.proto");
++    let index_old_proto = proto_dir.join("index_old.proto");
++    let cache_proto = proto_cache_dir.join("cache.proto");
++    for p in [&index_proto, &index_old_proto, &cache_proto] {
++        println!("cargo:warning=proto file {} (exists={})", p.display(), p.exists());
++    }
 +
      let mut prost_build = prost_build::Config::new();
      prost_build.protoc_arg("--experimental_allow_proto3_optional");
      prost_build.enable_type_names();
-     prost_build.compile_protos(
+-    prost_build.compile_protos(
 -        &[
 -            "./protos/index.proto",
 -            "./protos/index_old.proto",
 -            "./protos-cache/cache.proto",
 -        ],
 -        &["./protos", "./protos-cache"],
+-    )?;
++    let result = prost_build.compile_protos(
 +        &[index_proto, index_old_proto, cache_proto],
 +        &[proto_dir.as_path(), proto_cache_dir.as_path()],
-     )?;
++    );
++    if let Err(ref e) = result {
++        println!("cargo:warning=compile_protos failed: {e}");
++    }
++    result?;
  
      let rust_toolchain = env::var("RUSTUP_TOOLCHAIN")
+         .or_else(|e| match e {
 -- 
 2.54.0
 
