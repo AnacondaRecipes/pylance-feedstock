@@ -3,7 +3,7 @@ REM GitHub tag tarballs do not preserve symlinks on Windows. Upstream keeps prot
 REM root (protos/) and rust/lance-datafusion/protos is a symlink; build.rs expects files
 REM under rust/lance-datafusion/protos. Copy from SRC_DIR/protos when missing.
 REM Add same fix for other related sub-packages.
-for %%C in (lance-datafusion lance-index lance-table lance-file lance-encoding) do (
+for %%C in (lance lance-datafusion lance-index lance-table lance-file lance-encoding) do (
     if not exist "%SRC_DIR%\rust\%%C\protos\*.proto" (
         rd /s /q "%SRC_DIR%\rust\%%C\protos" 2>nul
         del /f /q "%SRC_DIR%\rust\%%C\protos" 2>nul
