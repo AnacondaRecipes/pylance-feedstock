@@ -1,44 +1,24 @@
-From 75d6c08bdcdb49aac65c7d3e2077f829d9c86420 Mon Sep 17 00:00:00 2001
+From 65c0df50bd6244d8c1acda9daa83a821f4c9a501 Mon Sep 17 00:00:00 2001
 From: Andrii Vetroumov <avetroumov@anaconda.com>
-Date: Thu, 17 Sep 2026 09:53:08 +0300
+Date: Thu, 17 Sep 2026 10:34:53 +0300
 Subject: [PATCH] Fix windows protoc paths
 
 ---
- rust/lance-index/build.rs | 12 ++++++++++--
- 1 file changed, 10 insertions(+), 2 deletions(-)
+ python/Cargo.toml | 1 +
+ 1 file changed, 1 insertion(+)
 
-diff --git a/rust/lance-index/build.rs b/rust/lance-index/build.rs
-index b47744f7b..6ba29e08e 100644
---- a/rust/lance-index/build.rs
-+++ b/rust/lance-index/build.rs
-@@ -16,17 +16,25 @@ fn main() -> Result<()> {
-         std::env::set_var("PROTOC", protobuf_src::protoc());
-     }
- 
-+    let manifest_dir = env::var("CARGO_MANIFEST_DIR").expect("CARGO_MANIFEST_DIR not set");
-+    let orig_dir = env::current_dir()?;
-+
-+    env::set_current_dir(&manifest_dir)?;
-+
-     let mut prost_build = prost_build::Config::new();
-     prost_build.protoc_arg("--experimental_allow_proto3_optional");
-     prost_build.enable_type_names();
--    prost_build.compile_protos(
-+    let result = prost_build.compile_protos(
-         &[
-             "./protos/index.proto",
-             "./protos/index_old.proto",
-             "./protos-cache/cache.proto",
-         ],
-         &["./protos", "./protos-cache"],
--    )?;
-+    );
-+
-+    env::set_current_dir(&orig_dir)?;
-+    result?;
- 
-     let rust_toolchain = env::var("RUSTUP_TOOLCHAIN")
-         .or_else(|e| match e {
+diff --git a/python/Cargo.toml b/python/Cargo.toml
+index ab7baf546..bd519b146 100644
+--- a/python/Cargo.toml
++++ b/python/Cargo.toml
+@@ -55,6 +55,7 @@ lance-file = { path = "../rust/lance-file" }
+ lance-index = { path = "../rust/lance-index", features = [
+     "tokenizer-lindera",
+     "tokenizer-jieba",
++    "protoc",
+ ] }
+ lance-io = { path = "../rust/lance-io", features = ["metrics"] }
+ lance-linalg = { path = "../rust/lance-linalg" }
 -- 
 2.54.0
 
