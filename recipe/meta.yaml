@@ -78,6 +78,7 @@ test:
   source_files:
     - python/pyproject.toml
     - python/python/tests
+    - test_data
   imports:
     - lance
   commands:
