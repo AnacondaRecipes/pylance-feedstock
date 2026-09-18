@@ -98,6 +98,9 @@ test:
     - psutil
     - pytorch
     - pytest-timeout
+    # Fix error:
+    # pluggy._manager.PluginValidationError: unknown hook 'pytest_configure_node' in plugin
+    - pytest-xdist
 
 about:
   home: https://lance.org/
