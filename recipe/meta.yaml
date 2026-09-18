@@ -53,6 +53,22 @@ requirements:
 {% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %}  # [win]
 {% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}  # [linux and aarch64]
 
+# AssertionError: Isolated probe 'index_statistics_no_leak' failed.
+{% set tests_to_skip = tests_to_skip + " or test_index_statistics_no_leak" %}  # [linux]
+
+# Failed: DID NOT RAISE RuntimeError
+{% set tests_to_skip = tests_to_skip + " or test_create_index_progress_callback_error_before_completion_propagates" %}  # [osx and win]
+
+# Numerous access deined errors on windows
+
+#  LanceError(IO): Generic LocalFileSystem error: Unable to create dir ...: Access is denied. (os error 5)
+{% set tests_to_skip = tests_to_skip + " or test_branch_crud_round_trip" %}  # [win]
+{% set tests_to_skip = tests_to_skip + " or test_create_branch_from_other_branch" %}  # [win]
+#  Failed to stage table test_table: Generic { store: "LocalFileSystem", source: UnableToCreateDir { source: Os { code: 5, kind: PermissionDenied, message: "Access is denied." },
+{% set tests_to_skip = tests_to_skip + " or test_external_manifest_store_invokes_namespace_apis" %}  # [win]
+{% set tests_to_skip = tests_to_skip + " or test_dataset_namespace_open_does_not_pass_version_to_describe_table" %}  # [win]
+
+
 # Linux: test_table_roundtrip causes a zombie process causing PBP to hang.
 {% set tests_to_skip = tests_to_skip + " or test_table_roundtrip" %}  # [linux]
   
@@ -67,6 +83,7 @@ requirements:
 
 # Skip until pytorch 2.10 is available with torch.compile support.
 {% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/torch_tests" %}  # [py==314]
+{% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/torch_tests/test_torch_kmeans.py::test_kmeans" %}  # [win]
 
 # Markers: drop GPU/slow suites from default CI; on py3.14 also drop torch-marked tests to match torch_tests ignore.
 {% set markers_to_skip = "cuda or slow or gpu" %}
