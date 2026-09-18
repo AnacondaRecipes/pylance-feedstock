@@ -57,7 +57,7 @@ requirements:
 {% set tests_to_skip = tests_to_skip + " or test_index_statistics_no_leak" %}  # [linux]
 
 # Failed: DID NOT RAISE RuntimeError
-{% set tests_to_skip = tests_to_skip + " or test_create_index_progress_callback_error_before_completion_propagates" %}  # [osx and win]
+{% set tests_to_skip = tests_to_skip + " or test_create_index_progress_callback_error_before_completion_propagates" %}
 
 # Numerous access deined errors on windows
 
