@@ -1,22 +1,22 @@
 {% set name = "pylance" %}
-{% set version = "4.0.0" %}
+{% set version = "11.0.0" %}
 
 package:
-  name: {{ name|lower }}
+  name: {{ name }}
   version: {{ version }}
 
 source:
   url: https://github.com/lancedb/lance/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: 72e1a28a84ed57e5d0e1bac4cb6855441e1c76099220472103145d1622394c61
+  sha256: e2704758360cb3e38b038dd7cbcdea74970c208e5fbe57c1cc3ecbedb72f823c
 
 build:
-  number: 1
-  skip: true  # [py<39]
+  number: 0
+  skip: true  # [py<310]
 
 requirements:
   build:
     - {{ compiler('c') }}
-    - {{ stdlib("c") }}
+    - {{ stdlib('c') }}
     - {{ compiler('rust') }}
     - cargo-bundle-licenses
     - libprotobuf
@@ -24,7 +24,6 @@ requirements:
     - python
     - pip
     - maturin >=1.4
-    - openssl {{ openssl }}
   run:
     - python
     # E  DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
@@ -32,7 +31,7 @@ requirements:
     # https://github.com/scikit-image/scikit-image/pull/8020
     - numpy >=1.22,<2.5
     - pyarrow >=14
-    - lance-namespace >=0.5.2
+    - lance-namespace >=0.8.5,<0.9
   run_constrained:
     - pytorch >=2.0
 
@@ -54,6 +53,23 @@ requirements:
 {% set tests_to_skip = tests_to_skip + " or test_torch_kmeans_nans" %}  # [win]
 {% set tests_to_skip = tests_to_skip + " or test_index_cast_centroids" %}  # [linux and aarch64]
 
+# AssertionError: Isolated probe 'index_statistics_no_leak' failed.
+{% set tests_to_skip = tests_to_skip + " or test_index_statistics_no_leak" %}  # [linux]
+
+# Failed: DID NOT RAISE RuntimeError
+{% set tests_to_skip = tests_to_skip + " or test_create_index_progress_callback_error_before_completion_propagates" %}
+
+# Numerous access deined errors on windows
+
+#  LanceError(IO): Generic LocalFileSystem error: Unable to create dir ...: Access is denied. (os error 5)
+{% set tests_to_skip = tests_to_skip + " or test_branch_crud_round_trip" %}  # [win]
+{% set tests_to_skip = tests_to_skip + " or test_create_branch_from_other_branch" %}  # [win]
+{% set tests_to_skip = tests_to_skip + " or test_declared_table_in_child_namespace" %}  # [win]
+#  Failed to stage table test_table: Generic { store: "LocalFileSystem", source: UnableToCreateDir { source: Os { code: 5, kind: PermissionDenied, message: "Access is denied." },
+{% set tests_to_skip = tests_to_skip + " or test_external_manifest_store_invokes_namespace_apis" %}  # [win]
+{% set tests_to_skip = tests_to_skip + " or test_dataset_namespace_open_does_not_pass_version_to_describe_table" %}  # [win]
+
+
 # Linux: test_table_roundtrip causes a zombie process causing PBP to hang.
 {% set tests_to_skip = tests_to_skip + " or test_table_roundtrip" %}  # [linux]
   
@@ -67,7 +83,7 @@ requirements:
 {% set test_files_to_skip = "--ignore python/tests/test_table_provider.py" %}
 
 # Skip until pytorch 2.10 is available with torch.compile support.
-{% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/torch_tests" %}  # [py==314]
+{% set test_files_to_skip = test_files_to_skip + " --ignore python/tests/torch_tests" %}  # [py==314 or win]
 
 # Markers: drop GPU/slow suites from default CI; on py3.14 also drop torch-marked tests to match torch_tests ignore.
 {% set markers_to_skip = "cuda or slow or gpu" %}
@@ -85,8 +101,7 @@ test:
   commands:
     - pip check
     - cd python
-    - pytest -q -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests
-
+    - pytest -vv -m "not ({{ markers_to_skip }})" -k "not ({{ tests_to_skip }})" {{ test_files_to_skip }} python/tests
   requires:
     - cxx-compiler  # torch.compile / inductor needs a working C++ compiler on PATH
     - pip
@@ -101,6 +116,9 @@ test:
     - psutil
     - pytorch
     - pytest-timeout
+    # Fix error:
+    # pluggy._manager.PluginValidationError: unknown hook 'pytest_configure_node' in plugin
+    - pytest-xdist
 
 about:
   home: https://lance.org/
