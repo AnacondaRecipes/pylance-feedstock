@@ -1,3 +1,19 @@
+From b7cb472dd01cab21dda2ff85d924ca5f3bf5684b Mon Sep 17 00:00:00 2001
+From: Esteban Gutierrez <esteban@lancedb.com>
+Date: Wed, 21 Oct 2026 12:53:05 -0500
+Subject: [PATCH] fix: update trust-store pins for the eMudhra CA compromise
+
+Cargo.lock: webpki-roots and webpki-root-certs 1.0.10, rustls-webpki 0.103.16. python/Cargo.lock and java/lance-jni/Cargo.lock: webpki-root-certs 1.0.10 and rustls-webpki 0.103.16; python/uv.lock: certifi 2026.10.19.
+
+The root crates drop the root CA whose intermediates were compromised, and rustls-webpki 0.103.16 rejects chains that carry the compromised eMudhra intermediate keys. certifi 2026.10.19 is the release the certifi advisory names as fixed.
+---
+ Cargo.lock                       | 14 +++++++-------
+ ci/dependency-age-allowlist.toml | 15 +++++++++++++++
+ java/lance-jni/Cargo.lock        |  8 ++++----
+ python/Cargo.lock                |  8 ++++----
+ python/uv.lock                   |  6 +++---
+ 5 files changed, 33 insertions(+), 18 deletions(-)
+
 diff --git a/Cargo.lock b/Cargo.lock
 index f3f076d..7e29b67 100644
 --- a/Cargo.lock
@@ -142,3 +158,6 @@ index 1bfeb19..a269af2 100644
  ]
  
  [[package]]
+-- 
+2.50.1 (Apple Git-155)
+
