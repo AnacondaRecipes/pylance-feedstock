@@ -21,17 +21,13 @@ requirements:
     - {{ stdlib('c') }}
     - {{ compiler('rust') }}
     - cargo-bundle-licenses
-    - libprotobuf
   host:
     - python
     - pip
     - maturin >=1.4
   run:
     - python
-    # E  DeprecationWarning: Setting the shape on a NumPy array has been deprecated in NumPy 2.5.
-    # E  As an alternative, you can create a new view using np.reshape (with copy=False if needed).
-    # https://github.com/scikit-image/scikit-image/pull/8020
-    - numpy >=1.22,<2.5
+    - numpy >=1.22
     - pyarrow >=14
     - lance-namespace >=0.13.0,<0.14
   run_constrained:
