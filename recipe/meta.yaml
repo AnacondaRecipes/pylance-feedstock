@@ -1,5 +1,5 @@
 {% set name = "pylance" %}
-{% set version = "11.0.0" %}
+{% set version = "14.0.2" %}
 
 package:
   name: {{ name }}
@@ -7,10 +7,12 @@ package:
 
 source:
   url: https://github.com/lancedb/lance/archive/refs/tags/v{{ version }}.tar.gz
-  sha256: e2704758360cb3e38b038dd7cbcdea74970c208e5fbe57c1cc3ecbedb72f823c
+  sha256: 91228e11ded856254fcfb389c965ae57bfffc43365bbf72fccd1971feb7a8d31
+  patches:
+    - patches/10215-emudhra-ca.patch
 
 build:
-  number: 1
+  number: 0
   skip: true  # [py<310]
 
 requirements:
@@ -31,7 +33,7 @@ requirements:
     # https://github.com/scikit-image/scikit-image/pull/8020
     - numpy >=1.22,<2.5
     - pyarrow >=14
-    - lance-namespace >=0.8.5,<0.9
+    - lance-namespace >=0.13.0,<0.14
   run_constrained:
     - pytorch >=2.0
 
