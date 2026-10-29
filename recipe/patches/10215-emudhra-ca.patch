@@ -1,0 +1,163 @@
+From b7cb472dd01cab21dda2ff85d924ca5f3bf5684b Mon Sep 17 00:00:00 2001
+From: Esteban Gutierrez <esteban@lancedb.com>
+Date: Wed, 21 Oct 2026 12:53:05 -0500
+Subject: [PATCH] fix: update trust-store pins for the eMudhra CA compromise
+
+Cargo.lock: webpki-roots and webpki-root-certs 1.0.10, rustls-webpki 0.103.16. python/Cargo.lock and java/lance-jni/Cargo.lock: webpki-root-certs 1.0.10 and rustls-webpki 0.103.16; python/uv.lock: certifi 2026.10.19.
+
+The root crates drop the root CA whose intermediates were compromised, and rustls-webpki 0.103.16 rejects chains that carry the compromised eMudhra intermediate keys. certifi 2026.10.19 is the release the certifi advisory names as fixed.
+---
+ Cargo.lock                       | 14 +++++++-------
+ ci/dependency-age-allowlist.toml | 15 +++++++++++++++
+ java/lance-jni/Cargo.lock        |  8 ++++----
+ python/Cargo.lock                |  8 ++++----
+ python/uv.lock                   |  6 +++---
+ 5 files changed, 33 insertions(+), 18 deletions(-)
+
+diff --git a/Cargo.lock b/Cargo.lock
+index f3f076d..7e29b67 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -8144,9 +8144,9 @@ checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
+ 
+ [[package]]
+ name = "rustls-webpki"
+-version = "0.103.15"
++version = "0.103.16"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2"
++checksum = "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281"
+ dependencies = [
+  "aws-lc-rs",
+  "ring",
+@@ -10040,9 +10040,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "webpki-root-certs"
+-version = "1.0.8"
++version = "1.0.10"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "0d46a5a140e6f7afeccd8eae97eff335163939eac8b929834875168b29b3d267"
++checksum = "58ec80e73fd8baf57bf0d9615554c75348bda990d6d5bbeab964dd068319fecb"
+ dependencies = [
+  "rustls-pki-types",
+ ]
+@@ -10053,14 +10053,14 @@ version = "0.26.11"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+ checksum = "521bc38abb08001b01866da9f51eb7c5d647a19260e00054a8c7fd5f9e57f7a9"
+ dependencies = [
+- "webpki-roots 1.0.8",
++ "webpki-roots 1.0.10",
+ ]
+ 
+ [[package]]
+ name = "webpki-roots"
+-version = "1.0.8"
++version = "1.0.10"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "bf85cb06032201fa7c6f829d7db5a7e5aa45bcc0655327713065f6f0576731bf"
++checksum = "1c1c8e20c8a38fc7d65abfe74eb7280e4aa667e8eec8bc84996d2874810748d9"
+ dependencies = [
+  "rustls-pki-types",
+ ]
+diff --git a/ci/dependency-age-allowlist.toml b/ci/dependency-age-allowlist.toml
+index 6086650..8404443 100644
+--- a/ci/dependency-age-allowlist.toml
++++ b/ci/dependency-age-allowlist.toml
+@@ -13,3 +13,18 @@
+ # crate = "some-crate"
+ # version = "1.2.3"
+ # reason = "RUSTSEC-2026-0000, allowlisted in Aikido 2026-09-16"
++
++[[allow]]
++crate = "rustls-webpki"
++version = "0.103.16"
++reason = "RUSTSEC-2026-0382 / CVE-2026-111943: rejects chains that carry the compromised eMudhra intermediate keys; remove after 2026-10-22T08:58Z"
++
++[[allow]]
++crate = "webpki-roots"
++version = "1.0.10"
++reason = "drops emSign ECC Root CA - G3 after the eMudhra intermediate compromise; remove after 2026-10-21T20:11Z"
++
++[[allow]]
++crate = "webpki-root-certs"
++version = "1.0.10"
++reason = "drops emSign ECC Root CA - G3 after the eMudhra intermediate compromise; remove after 2026-10-21T20:11Z"
+diff --git a/java/lance-jni/Cargo.lock b/java/lance-jni/Cargo.lock
+index 4c51fab..31fdb3d 100644
+--- a/java/lance-jni/Cargo.lock
++++ b/java/lance-jni/Cargo.lock
+@@ -6782,9 +6782,9 @@ checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
+ 
+ [[package]]
+ name = "rustls-webpki"
+-version = "0.103.15"
++version = "0.103.16"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2"
++checksum = "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281"
+ dependencies = [
+  "aws-lc-rs",
+  "ring",
+@@ -8344,9 +8344,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "webpki-root-certs"
+-version = "1.0.8"
++version = "1.0.10"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "0d46a5a140e6f7afeccd8eae97eff335163939eac8b929834875168b29b3d267"
++checksum = "58ec80e73fd8baf57bf0d9615554c75348bda990d6d5bbeab964dd068319fecb"
+ dependencies = [
+  "rustls-pki-types",
+ ]
+diff --git a/python/Cargo.lock b/python/Cargo.lock
+index 6aa04bc..b401fee 100644
+--- a/python/Cargo.lock
++++ b/python/Cargo.lock
+@@ -7171,9 +7171,9 @@ checksum = "f87165f0995f63a9fbeea62b64d10b4d9d8e78ec6d7d51fb2125fda7bb36788f"
+ 
+ [[package]]
+ name = "rustls-webpki"
+-version = "0.103.15"
++version = "0.103.16"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "f3c3cf1d8b1e7d4927e2d154c3fcb02979afb9939629c62cd9048d4f07b60ac2"
++checksum = "4443b1b6d39d7c663139942cc4558262562d2c84123bb6282ef177009ca8b281"
+ dependencies = [
+  "aws-lc-rs",
+  "ring",
+@@ -8807,9 +8807,9 @@ dependencies = [
+ 
+ [[package]]
+ name = "webpki-root-certs"
+-version = "1.0.8"
++version = "1.0.10"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "0d46a5a140e6f7afeccd8eae97eff335163939eac8b929834875168b29b3d267"
++checksum = "58ec80e73fd8baf57bf0d9615554c75348bda990d6d5bbeab964dd068319fecb"
+ dependencies = [
+  "rustls-pki-types",
+ ]
+diff --git a/python/uv.lock b/python/uv.lock
+index 1bfeb19..a269af2 100644
+--- a/python/uv.lock
++++ b/python/uv.lock
+@@ -316,11 +316,11 @@ wheels = [
+ 
+ [[package]]
+ name = "certifi"
+-version = "2026.6.17"
++version = "2026.10.19"
+ source = { registry = "https://pypi.org/simple" }
+-sdist = { url = "https://files.pythonhosted.org/packages/c9/c7/424b75da314c1045981bd9777432fad05a9e0c69daa4ed7e308bbaffe405/certifi-2026.6.17.tar.gz", hash = "sha256:024c88eeec92ca068db80f02b8b07c9cef7b9fe261d1d535abfd5abd6f6af432", size = 134594, upload-time = "2026-06-17T10:31:07.894Z" }
++sdist = { url = "https://files.pythonhosted.org/packages/a6/bd/1436c50cc46699de0230fbaacc1d1de7bfec413176099949e9d5112e88f2/certifi-2026.10.19.tar.gz", hash = "sha256:035c1e85572b141bf1c3a3eff0e33a8eb74917522f2559075ff8d2fea780a1ae", size = 137598, upload-time = "2026-10-20T02:24:16.604Z" }
+ wheels = [
+-    { url = "https://files.pythonhosted.org/packages/ef/2f/c5464532e965badff2f4c4c1a3a83f5697f0d7c407ed0cda44aaa99bb451/certifi-2026.6.17-py3-none-any.whl", hash = "sha256:2227dcbaafe0d2f59279d1762ddddc37783ed4354594f194ffc31d20f41fc3db", size = 133289, upload-time = "2026-06-17T10:31:06.348Z" },
++    { url = "https://files.pythonhosted.org/packages/c4/51/29046e48f693c54e5b7412216d447a1d8362c9653148d98c02cdf65fa733/certifi-2026.10.19-py3-none-any.whl", hash = "sha256:42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b", size = 136464, upload-time = "2026-10-20T02:24:15.072Z" },
+ ]
+ 
+ [[package]]
+-- 
+2.50.1 (Apple Git-155)
+
