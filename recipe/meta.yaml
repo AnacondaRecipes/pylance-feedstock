@@ -37,6 +37,8 @@ requirements:
   run_constrained:
     - pytorch >=2.0
 
+{% set tests_to_skip = "not_a_real_test" %}
+
 # Windows fatal exception: access violation
 {% set tests_to_skip = tests_to_skip + " or test_ground_truth" %}       # [win]
 {% set tests_to_skip = tests_to_skip + " or test_cosine_distance" %}    # [win]
